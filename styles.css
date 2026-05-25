@@ -1,0 +1,69 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #fff;
+  color: #000;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.weather {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 6vh 5vw 4vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.readings {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7vh;
+}
+
+.reading {
+  line-height: 1;
+}
+
+.value {
+  font-size: 28vw;
+  font-weight: bold;
+}
+
+.unit {
+  margin-top: 0.12em;
+  font-size: 10vw;
+}
+
+.timestamp {
+  min-height: 1.4em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 4vw;
+}
+
+@media (min-width: 800px) {
+  .weather {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .value {
+    font-size: 180px;
+  }
+
+  .unit {
+    font-size: 64px;
+  }
+
+  .timestamp {
+    font-size: 24px;
+  }
+}

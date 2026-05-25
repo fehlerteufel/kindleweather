@@ -1,1 +1,19 @@
 # kindleweather
+
+Simple Kindle-friendly weather display for Cloudflare Pages.
+
+It shows the latest temperature (`tl`), relative humidity (`rf`), and timestamp
+from the Pottschach TAWES endpoint. The browser calls `/api/weather`; the
+Cloudflare Pages Function fetches the upstream data server-side to avoid CORS
+issues.
+
+## Cloudflare Pages
+
+No build step is required.
+
+- Build command: leave empty
+- Build output directory: `/`
+- Functions directory: `functions`
+
+The page refreshes its data every ten minutes. A HTML meta refresh is also
+included as a fallback for older Kindle browsers.
