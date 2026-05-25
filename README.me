@@ -1,19 +1,27 @@
 # kindleweather
 
-Simple Kindle-friendly weather display for Cloudflare Pages.
+Simple Kindle-friendly weather display for Cloudflare.
 
 It shows the latest temperature (`tl`), relative humidity (`rf`), and timestamp
-from the Pottschach TAWES endpoint. The browser calls `/api/weather`; the
-Cloudflare Pages Function fetches the upstream data server-side to avoid CORS
-issues.
+from the Pottschach TAWES endpoint. The browser calls `/api/weather`; the Worker
+fetches the upstream data server-side to avoid CORS issues.
 
-## Cloudflare Pages
+## Cloudflare Workers
 
 No build step is required.
 
+The `wrangler.jsonc` file deploys the repository root as static assets and uses
+`_worker.js` for the `/api/weather` route.
+
+## Cloudflare Pages
+
+If you deploy this as a Pages project, use Pages Functions advanced mode:
+
 - Build command: leave empty
 - Build output directory: `/`
-- Functions directory: `functions`
+
+The `_worker.js` file must be in the output directory. It handles
+`/api/weather` and passes all other requests through to static assets.
 
 The page refreshes its data every ten minutes. A HTML meta refresh is also
 included as a fallback for older Kindle browsers.

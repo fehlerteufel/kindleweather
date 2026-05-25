@@ -1,12 +1,23 @@
 const SOURCE_URL =
   "https://messwerte.tawes.at/NOE/11381_Pottschach/ajax/temperaturverlauf.php";
 
-export async function onRequestGet() {
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/api/weather") {
+      return handleWeatherRequest();
+    }
+
+    return env.ASSETS.fetch(request);
+  },
+};
+
+async function handleWeatherRequest() {
   try {
     const response = await fetch(SOURCE_URL, {
       headers: {
         accept: "application/json",
-        "user-agent": "kindleweather-cloudflare-pages",
       },
     });
 
