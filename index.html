@@ -71,7 +71,12 @@
       
       function refresh() {
         now = new Date();
-        document.querySelector(".time").innerHTML = now.getHours() + ":" + twoDigits(now.getMinutes());
+        var utc = now.getTime();
+
+var offset = getTimezoneOffsetHours(utc);
+
+var localHour = (now.getUTCHours() + offset) % 24;
+        document.querySelector(".time").innerHTML = localHour + ":" + twoDigits(now.getMinutes());
         document.querySelector(".weekday").innerHTML = days[now.getDay()];
         document.querySelector(".day").innerHTML = now.getDate() + ". " + months[now.getMonth()];
 
@@ -163,6 +168,121 @@
       }
 
       refresh();
+
+
+var timezoneTransitions = [
+  {
+    "from": 1711846800000,
+    "offset": 2
+  },
+  {
+    "from": 1729990800000,
+    "offset": 1
+  },
+  {
+    "from": 1743296400000,
+    "offset": 2
+  },
+  {
+    "from": 1761440400000,
+    "offset": 1
+  },
+  {
+    "from": 1774746000000,
+    "offset": 2
+  },
+  {
+    "from": 1792890000000,
+    "offset": 1
+  },
+  {
+    "from": 1806195600000,
+    "offset": 2
+  },
+  {
+    "from": 1824944400000,
+    "offset": 1
+  },
+  {
+    "from": 1837645200000,
+    "offset": 2
+  },
+  {
+    "from": 1856394000000,
+    "offset": 1
+  },
+  {
+    "from": 1869094800000,
+    "offset": 2
+  },
+  {
+    "from": 1887843600000,
+    "offset": 1
+  },
+  {
+    "from": 1901149200000,
+    "offset": 2
+  },
+  {
+    "from": 1919293200000,
+    "offset": 1
+  },
+  {
+    "from": 1932598800000,
+    "offset": 2
+  },
+  {
+    "from": 1950742800000,
+    "offset": 1
+  },
+  {
+    "from": 1964048400000,
+    "offset": 2
+  },
+  {
+    "from": 1982797200000,
+    "offset": 1
+  },
+  {
+    "from": 1995498000000,
+    "offset": 2
+  },
+  {
+    "from": 2014246800000,
+    "offset": 1
+  },
+  {
+    "from": 2026947600000,
+    "offset": 2
+  },
+  {
+    "from": 2045696400000,
+    "offset": 1
+  },
+  {
+    "from": 2058397200000,
+    "offset": 2
+  },
+  {
+    "from": 2077146000000,
+    "offset": 1
+  }
+];
+
+      function getTimezoneOffsetHours(ts) {
+  var offset = 1;
+
+  for (var i = 0; i < timezoneTransitions.length; i++) {
+    if (ts >= timezoneTransitions[i].from) {
+      offset = timezoneTransitions[i].offset;
+    } else {
+      break;
+    }
+  }
+
+  return offset;
+      }
+      
     })();
 
 
