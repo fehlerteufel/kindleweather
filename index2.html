@@ -10,7 +10,7 @@
 </head>
 
 <body style="width: 728px; height: 984px; border: 1px solid black; margin: 0; padding: 20px;">
-  <div class="block1" style="height:auto">
+  <div class="block1" style="height:auto; padding-bottom: 5px;">
     <div class="time" style="font-size:150px; float:left;">
       --:--
     </div>
@@ -19,17 +19,21 @@
       <div class="day"></div>
     </div>
   </div>
-  <div class="block2" style="height:200px; clear:both; border-top: 1px solid black; border-bottom: 1px solid black;">
+  <div class="block2" style="height:200px; clear:both; border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 5px; padding-bottom: 5px;">
     <div style="height:100%; width: 50%; float:left;">
       <span class="temperature" style="font-size:130px;">--,-</span>
-      <sup style="font-size: 60px;">℃</sup>
+      <span style="font-size: 60px; vertical-align: top;">℃</span>
     </div>
     <div style="font-size:50px; height:50%; width: 50%; float:right; text-align:right;">
       <span class="humidity" >--</span>
       <span style="font-size: 30px;">%</span>
     </div>
     <div class="minmaxtemp" style="font-size: 50px; height:50%; width:50%; float:right; text-align:right;">
-      --
+      <span class="mintemp">--,-</span>
+      <span style="font-size: 30px; vertical-align: top;">℃</span>
+      <span> / </span>
+      <span class="maxtemp">--,-</span>
+      <span style="font-size: 30px; vertical-align: top;">℃</span>
     </div>
   </div>
   <!--<main class="weather" aria-live="polite">
@@ -56,6 +60,8 @@
       var temperatureEl = document.querySelector(".temperature");
       var humidityEl = document.querySelector(".humidity");
       var minmaxtempEl = document.querySelector(".minmaxtemp");
+      var minTempEl = document.querySelector(".mintemp");
+      var maxTempEl = document.querySelector(".maxtemp");
       var timestampEl = document.getElementById("timestamp");
       var lastWeatherTimestamp = null;
 
@@ -107,15 +113,17 @@
           try {
             var data = JSON.parse(xhr.responseText);
             lastWeatherTimestamp = data.timestamp || lastWeatherTimestamp;
-            temperatureEl.innerHTML = Number(data.temperature).toFixed(1);
+            temperatureEl.innerHTML = Number(data.temperature).toFixed(1).replace(".", ",");
             humidityEl.innerHTML = Math.round(Number(data.humidity));
-            var minTemp = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1) : null;
+            minTempEl.innerHTML = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1).replace(".", ",") : "--,-";
+            maxTempEl.innerHTML = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1).replace(".", ",") : "--,-";
+            /*var minTemp = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1) : null;
             var maxTemp = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1) : null;
             if (minTemp !== null && maxTemp !== null) {
               minmaxtempEl.innerHTML = minTemp + "℃ / " + maxTemp + "℃";
             } else {
               minmaxtempEl.innerHTML = "";
-            }
+            }*/
             if (timestampEl) {
               timestampEl.innerHTML = data.timestamp || "";
             }
