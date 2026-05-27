@@ -30,6 +30,7 @@ async function handleWeatherRequest() {
 
     const measurements = await response.json();
     const latest = findLatestMeasurement(measurements);
+    const extreme = findExtremeMeasurement(measurements);
 
     if (!latest) {
       return json({ error: "No temperature and humidity values found" }, 502);
@@ -39,6 +40,8 @@ async function handleWeatherRequest() {
       temperature: latest.tl,
       humidity: latest.rf,
       timestamp: latest.datum,
+      minTemperature: extreme ? extreme.tl_min : null,
+      maxTemperature: extreme ? extreme.tl_max : null,
     });
   } catch (error) {
     return json({ error: "Unable to fetch weather data" }, 502);
@@ -65,6 +68,23 @@ function findLatestMeasurement(measurements) {
     })[0];
 }
 
+function findExtremeMeasurement(measurements) {
+  if (!Array.isArray(measurements)) {
+    return null;
+  }
+
+  return measurements
+    .filter((item) => {
+      return (
+        item &&
+        typeof item.tl === "number" &&
+        typeof item.rf === "number" &&
+        typeof item.datum === "string" &&
+        item.datum === "extremwerte"
+      );
+    })[0];
+}
+
 function parseTimestamp(value) {
   return Date.parse(value.replace(" ", "T"));
 }
@@ -74,7 +94,7 @@ function json(data, status = 200) {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=120",
+      "cache-control": "public, max-age=30",
     },
   });
 }
