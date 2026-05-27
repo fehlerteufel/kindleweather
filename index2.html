@@ -11,7 +11,7 @@
 
 <body style="width: 728px; height: 984px; border: 1px solid black; margin: 0; padding: 20px;">
   <div class="block1" style="height:auto">
-    <div class="time" style="font-size:160px; float:left;">
+    <div class="time" style="font-size:150px; float:left;">
       --:--
     </div>
     <div class="date" style="font-size:70px; float:right; text-align:right;">
@@ -21,11 +21,12 @@
   </div>
   <div class="block2" style="height:200px; clear:both;">
     <div style="height:100%; width: 50%; float:left;">
-      <span class="temperature" style="font-size:160px;">--,-</span>
-      <sup style="font-size: 70px;">°C</sup>
+      <span class="temperature" style="font-size:150px;">--,-</span>
+      <sup style="font-size: 70px;">℃</sup>
     </div>
-    <div class="humidity" style="font-size:60px; height:50%; width: 50%; float:right; text-align:right;">
-      --%
+    <div style="font-size:60px; height:50%; width: 50%; float:right; text-align:right;">
+      <span class="humidity" style="font-size:60px;">--</span>
+      <span style="font-size: 30px;">%</span>
     </div>
     <div class="minmaxtemp" style="font-size: 60px; height:50%; width:50%; float:right; text-align:right;">
       --
@@ -111,7 +112,7 @@
             var minTemp = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1) : null;
             var maxTemp = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1) : null;
             if (minTemp !== null && maxTemp !== null) {
-              minmaxtempEl.innerHTML = minTemp + "°C / " + maxTemp + "°C";
+              minmaxtempEl.innerHTML = minTemp + "℃ / " + maxTemp + "℃";
             } else {
               minmaxtempEl.innerHTML = "";
             }
