@@ -65,9 +65,13 @@
       var timestampEl = document.getElementById("timestamp");
       var lastWeatherTimestamp = null;
 
+      function twoDigits(n) {
+        return n < 10 ? "0" + n : "" + n;
+      }
+      
       function refresh() {
         now = new Date();
-        document.querySelector(".time").innerHTML = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
+        document.querySelector(".time").innerHTML = now.getHours() + ":" + twoDigits(now.getMinutes());
         document.querySelector(".weekday").innerHTML = days[now.getDay()];
         document.querySelector(".day").innerHTML = now.getDate() + ". " + months[now.getMonth()];
 
