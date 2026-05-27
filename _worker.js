@@ -77,8 +77,8 @@ function findExtremeMeasurement(measurements) {
     .filter((item) => {
       return (
         item &&
-        typeof item.tl === "number" &&
-        typeof item.rf === "number" &&
+        typeof item.tl_max === "number" &&
+        typeof item.tl_min === "number" &&
         typeof item.datum === "string" &&
         item.datum === "extremwerte"
       );
