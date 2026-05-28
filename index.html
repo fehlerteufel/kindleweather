@@ -37,20 +37,6 @@
       <span style="font-size: 30px; vertical-align: top;">℃</span>
     </div>
   </div>
-  <!--<main class="weather" aria-live="polite">
-      <section class="readings">
-        <div class="reading">
-          <div id="temperature" class="value">--.-</div>
-          <div class="unit">C</div>
-        </div>
-        <div class="reading">
-          <div id="humidity" class="value">--</div>
-          <div class="unit">%</div>
-        </div>
-      </section>
-      <footer id="timestamp" class="timestamp">Loading...</footer>
-    </main>-->
-  <!--<script src="/app.js"></script>-->
 
   <script>
     (function () {
@@ -75,11 +61,11 @@
         var utc = now.getTime();
 
         var offset = getTimezoneOffsetHours(utc);
+        var localNow = new Date(utc + offset * 60 * 60 * 1000);
 
-        var localHour = (now.getUTCHours() + offset) % 24;
-        document.querySelector(".time").innerHTML = localHour + ":" + twoDigits(now.getMinutes());
-        document.querySelector(".weekday").innerHTML = days[now.getDay()];
-        document.querySelector(".day").innerHTML = now.getDate() + ". " + months[now.getMonth()];
+        document.querySelector(".time").innerHTML = localNow.getUTCHours() + ":" + twoDigits(localNow.getUTCMinutes());
+        document.querySelector(".weekday").innerHTML = days[localNow.getUTCDay()];
+        document.querySelector(".day").innerHTML = localNow.getUTCDate() + ". " + months[localNow.getUTCMonth()];
 
         window.setTimeout(refresh, (60 - now.getSeconds()) * 1000 - now.getMilliseconds());
 
@@ -127,13 +113,6 @@
             humidityEl.innerHTML = Math.round(Number(data.humidity));
             minTempEl.innerHTML = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1).replace(".", ",") : "--,-";
             maxTempEl.innerHTML = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1).replace(".", ",") : "--,-";
-            /*var minTemp = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1) : null;
-            var maxTemp = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1) : null;
-            if (minTemp !== null && maxTemp !== null) {
-              minmaxtempEl.innerHTML = minTemp + "℃ / " + maxTemp + "℃";
-            } else {
-              minmaxtempEl.innerHTML = "";
-            }*/
             if (timestampEl) {
               timestampEl.innerHTML = data.timestamp || "";
             }
