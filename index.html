@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="600">
+  <!--<meta http-equiv="refresh" content="600"> -->
   <title>Kindle Weather</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
@@ -110,7 +110,10 @@
             var data = JSON.parse(xhr.responseText);
             lastWeatherTimestamp = data.timestamp || lastWeatherTimestamp;
             temperatureEl.innerHTML = Number(data.temperature).toFixed(1).replace(".", ",");
-            humidityEl.innerHTML = Math.round(Number(data.humidity));
+
+            var humidityAt21Degrees = data.humidity * Math.exp(17.62 * data.temperature / (243.12 + data.temperature)) / Math.exp(17.62 * 21 / (243.12 + 21));
+            humidityEl.innerHTML = Math.round(Number(data.humidity)) + ' (' + Math.round(humidityAt21Degrees) + ' % @ 21 °C)';
+
             minTempEl.innerHTML = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1).replace(".", ",") : "--,-";
             maxTempEl.innerHTML = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1).replace(".", ",") : "--,-";
             if (timestampEl) {
