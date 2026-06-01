@@ -28,6 +28,7 @@
     <div style="font-size:50px; height:50%; width: 50%; float:right; text-align:right;">
       <span class="humidity">--</span>
       <span style="font-size: 30px;">%</span>
+      <span class="humidity21" style="font-size: 30px;"></span>
     </div>
     <div class="minmaxtemp" style="font-size: 50px; height:50%; width:50%; float:right; text-align:right;">
       <span class="mintemp">--,-</span>
@@ -46,6 +47,7 @@
 
       var temperatureEl = document.querySelector(".temperature");
       var humidityEl = document.querySelector(".humidity");
+      var humidity21El = document.querySelector(".humidity21");
       var minmaxtempEl = document.querySelector(".minmaxtemp");
       var minTempEl = document.querySelector(".mintemp");
       var maxTempEl = document.querySelector(".maxtemp");
@@ -111,8 +113,9 @@
             lastWeatherTimestamp = data.timestamp || lastWeatherTimestamp;
             temperatureEl.innerHTML = Number(data.temperature).toFixed(1).replace(".", ",");
 
+            humidityEl.innerHTML = Math.round(Number(data.humidity));
             var humidityAt21Degrees = data.humidity * Math.exp(17.62 * data.temperature / (243.12 + data.temperature)) / Math.exp(17.62 * 21 / (243.12 + 21));
-            humidityEl.innerHTML = Math.round(Number(data.humidity)) + ' (' + Math.round(humidityAt21Degrees) + ' % @ 21 °C)';
+            humidity21El.innerHTML = '(' + Math.round(humidityAt21Degrees) + ' % @ 21 °C)';
 
             minTempEl.innerHTML = data.minTemperature !== null ? Number(data.minTemperature).toFixed(1).replace(".", ",") : "--,-";
             maxTempEl.innerHTML = data.maxTemperature !== null ? Number(data.maxTemperature).toFixed(1).replace(".", ",") : "--,-";
