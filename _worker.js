@@ -11,9 +11,26 @@ export default {
       return handleWeatherRequest();
     }
 
+    if (url.pathname === "/api/time") {
+      return handleTimeRequest();
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
+
+function handleTimeRequest() {
+  const now = new Date();
+
+  return json(
+    {
+      epochMs: now.getTime(),
+      iso: now.toISOString(),
+    },
+    200,
+    "no-store",
+  );
+}
 
 async function handleWeatherRequest() {
   try {
@@ -261,12 +278,12 @@ function pad(value) {
   return String(value).padStart(2, "0");
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, cacheControl = "public, max-age=30") {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=30",
+      "cache-control": cacheControl,
     },
   });
 }

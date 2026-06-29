@@ -7,12 +7,18 @@ today's temperature range from the Geosphere Austria TAWES API. The browser
 calls `/api/weather`; the Worker fetches the upstream data server-side to avoid
 CORS issues.
 
+The page also calls `/api/time` regularly and treats the Worker time as the
+network time source. The browser estimates clock drift from the request
+round-trip midpoint, keeps a trimmed mean of recent deviations, persists the
+latest correction in local storage, and applies the corrected time to the clock
+display and weather freshness checks.
+
 ## Cloudflare Workers
 
 No build step is required.
 
 The `wrangler.jsonc` file deploys the repository root as static assets and uses
-`_worker.js` for the `/api/weather` route.
+`_worker.js` for the `/api/weather` and `/api/time` routes.
 
 ## Cloudflare Pages
 
@@ -22,7 +28,8 @@ If you deploy this as a Pages project, use Pages Functions advanced mode:
 - Build output directory: `/`
 
 The `_worker.js` file must be in the output directory. It handles
-`/api/weather` and passes all other requests through to static assets.
+`/api/weather` and `/api/time`, then passes all other requests through to static
+assets.
 
 The page refreshes its data every ten minutes. A HTML meta refresh is also
 included as a fallback for older Kindle browsers.

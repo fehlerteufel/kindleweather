@@ -43,7 +43,13 @@
     (function () {
       var days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
       var months = ["Jan.", "Feb.", "März", "April", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."];
-      var now = new Date();
+      var timeSyncIntervalMs = 5 * 60 * 1000;
+      var timeSyncMaxSamples = 7;
+      var timeSyncMaxRoundTripMs = 15000;
+      var maxStoredTimeCorrectionMs = 24 * 60 * 60 * 1000;
+      var timeCorrectionMs = readStoredTimeCorrection();
+      var timeSamples = [];
+      var refreshTimer = null;
 
       var temperatureEl = document.querySelector(".temperature");
       var humidityEl = document.querySelector(".humidity");
@@ -58,20 +64,138 @@
         return n < 10 ? "0" + n : "" + n;
       }
 
-      function refresh() {
-        now = new Date();
-        var utc = now.getTime();
+      function systemNowMs() {
+        return new Date().getTime();
+      }
 
+      function correctedNowMs() {
+        return systemNowMs() + timeCorrectionMs;
+      }
+
+      function readStoredTimeCorrection() {
+        var storedValue;
+        var parsedValue;
+
+        try {
+          storedValue = window.localStorage && window.localStorage.getItem("timeCorrectionMs");
+        } catch (error) {
+          return 0;
+        }
+
+        parsedValue = Number(storedValue);
+        if (isNaN(parsedValue) || Math.abs(parsedValue) > maxStoredTimeCorrectionMs) {
+          return 0;
+        }
+
+        return parsedValue;
+      }
+
+      function refresh() {
+        refreshClockOnly();
+        scheduleRefresh();
+        requestWeather();
+      }
+
+      function scheduleRefresh() {
+        var now = new Date(correctedNowMs());
+        var delayMs = (60 - now.getUTCSeconds()) * 1000 - now.getUTCMilliseconds();
+
+        if (refreshTimer !== null) {
+          window.clearTimeout(refreshTimer);
+        }
+
+        refreshTimer = window.setTimeout(refresh, delayMs);
+      }
+
+      function refreshClockOnly() {
+        var utc = correctedNowMs();
         var offset = getTimezoneOffsetHours(utc);
         var localNow = new Date(utc + offset * 60 * 60 * 1000);
 
         document.querySelector(".time").innerHTML = localNow.getUTCHours() + ":" + twoDigits(localNow.getUTCMinutes());
         document.querySelector(".weekday").innerHTML = days[localNow.getUTCDay()];
         document.querySelector(".day").innerHTML = localNow.getUTCDate() + ". " + months[localNow.getUTCMonth()];
+      }
 
-        window.setTimeout(refresh, (60 - now.getSeconds()) * 1000 - now.getMilliseconds());
+      function syncTime() {
+        var xhr = new XMLHttpRequest();
+        var sentAt = systemNowMs();
 
-        requestWeather();
+        xhr.open("GET", "/api/time?t=" + sentAt, true);
+        xhr.onreadystatechange = function () {
+          var receivedAt;
+          var roundTripMs;
+          var serverTimeMs;
+          var response;
+
+          if (xhr.readyState !== 4) {
+            return;
+          }
+
+          receivedAt = systemNowMs();
+          roundTripMs = receivedAt - sentAt;
+
+          if (xhr.status < 200 || xhr.status >= 300 || roundTripMs > timeSyncMaxRoundTripMs) {
+            return;
+          }
+
+          try {
+            response = JSON.parse(xhr.responseText);
+          } catch (error) {
+            response = {};
+          }
+
+          serverTimeMs = Number(response.epochMs);
+          if (!serverTimeMs && response.iso) {
+            serverTimeMs = Date.parse(response.iso);
+          }
+          if (!serverTimeMs) {
+            serverTimeMs = Date.parse(xhr.getResponseHeader("Date"));
+          }
+          if (!serverTimeMs || isNaN(serverTimeMs)) {
+            return;
+          }
+
+          addTimeSample(serverTimeMs - (sentAt + roundTripMs / 2));
+          refreshClockOnly();
+          scheduleRefresh();
+        };
+        xhr.send();
+      }
+
+      function addTimeSample(deviationMs) {
+        var samples;
+        var sum = 0;
+        var i;
+
+        timeSamples.push(deviationMs);
+        while (timeSamples.length > timeSyncMaxSamples) {
+          timeSamples.shift();
+        }
+
+        samples = timeSamples.slice(0).sort(function (a, b) {
+          return a - b;
+        });
+        if (samples.length >= 5) {
+          samples = samples.slice(1, samples.length - 1);
+        }
+
+        for (i = 0; i < samples.length; i++) {
+          sum += samples[i];
+        }
+
+        timeCorrectionMs = Math.round(sum / samples.length);
+        storeTimeCorrection();
+      }
+
+      function storeTimeCorrection() {
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem("timeCorrectionMs", String(timeCorrectionMs));
+          }
+        } catch (error) {
+          return;
+        }
       }
 
       function requestWeather() {
@@ -80,7 +204,7 @@
         var lastWeatherDate = parseWeatherTimestamp(lastWeatherTimestamp);
 
         if (lastWeatherDate) {
-          var weatherAge = new Date().getTime() - lastWeatherDate.getTime();
+          var weatherAge = correctedNowMs() - lastWeatherDate.getTime();
 
           if (weatherAge > thirtyMinutes) {
             temperatureEl.innerHTML = "--,-";
@@ -95,7 +219,7 @@
 
         var xhr = new XMLHttpRequest();
 
-        xhr.open("GET", "/api/weather?t=" + new Date().getTime(), true);
+        xhr.open("GET", "/api/weather?t=" + correctedNowMs(), true);
         xhr.onreadystatechange = function () {
           if (xhr.readyState !== 4) {
             return;
@@ -133,6 +257,8 @@
 
       function parseWeatherTimestamp(timestamp) {
         var parts;
+        var localTimeMs;
+        var offset;
 
         if (!timestamp) {
           return null;
@@ -143,7 +269,7 @@
           return null;
         }
 
-        return new Date(
+        localTimeMs = Date.UTC(
           Number(parts[1]),
           Number(parts[2]) - 1,
           Number(parts[3]),
@@ -151,6 +277,9 @@
           Number(parts[5]),
           Number(parts[6])
         );
+        offset = getTimezoneOffsetHours(localTimeMs);
+
+        return new Date(localTimeMs - offset * 60 * 60 * 1000);
       }
 
 
@@ -269,6 +398,8 @@
       }
 
       refresh();
+      syncTime();
+      window.setInterval(syncTime, timeSyncIntervalMs);
 
     })();
 
