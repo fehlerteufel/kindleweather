@@ -2,9 +2,10 @@
 
 Simple Kindle-friendly weather display for Cloudflare.
 
-It shows the latest temperature (`tl`), relative humidity (`rf`), and timestamp
-from the Pottschach TAWES endpoint. The browser calls `/api/weather`; the Worker
-fetches the upstream data server-side to avoid CORS issues.
+It shows the latest temperature (`TL`), relative humidity (`RF`), timestamp, and
+today's temperature range from the Geosphere Austria TAWES API. The browser
+calls `/api/weather`; the Worker fetches the upstream data server-side to avoid
+CORS issues.
 
 ## Cloudflare Workers
 

@@ -1,5 +1,7 @@
-const SOURCE_URL =
-  "https://messwerte.tawes.at/NOE/11381_Pottschach/ajax/temperaturverlauf.php";
+const WEATHER_API_BASE = "https://dataset.api.hub.geosphere.at/v1/station";
+const STATION_ID = "11381";
+const PARAMETERS = ["RR", "P", "TL", "RF"];
+const WEATHER_TIME_ZONE = "Europe/Vienna";
 
 export default {
   async fetch(request, env) {
@@ -8,74 +10,255 @@ export default {
     if (url.pathname === "/api/weather") {
       return handleWeatherRequest();
     }
-    if (url.pathname === "/api/historical") {
-      return handleHistoricalRequest(url);
-    }
+
     return env.ASSETS.fetch(request);
   },
 };
 
 async function handleWeatherRequest() {
   try {
-    const response = await fetch("https://dataset.api.hub.geosphere.at/v1/station/current/tawes-v1-10min?parameters=RR&parameters=P&parameters=TL&parameters=RF&station_ids=11381&output_format=geojson", {
-      headers: { accept: "application/json" },
-    });
-    if (!response.ok) {
-      return json({ error: `Weather source returned ${response.status}` }, response.status);
+    const [current, historical] = await Promise.all([
+      fetchWeatherJson(buildCurrentWeatherUrl()),
+      fetchWeatherJson(buildHistoricalWeatherUrl()),
+    ]);
+
+    const latest = findLatestMeasurement(current);
+    const extreme = findTemperatureExtremes(historical);
+
+    if (!latest) {
+      return json({ error: "No temperature and humidity values found" }, 502);
     }
-    const data = await response.json();
-    const feature = data.features && data.features[0];
-    if (!feature) {
-      return json({ error: "No data received" }, 502);
-    }
-    const params = feature.properties?.parameters;
-    const timestamp = data.timestamps && data.timestamps[0];
-    if (!params || !timestamp) {
-      return json({ error: "Incomplete data" }, 502);
-    }
-    const temp = params.TL?.data?.[0];
-    const hum = params.RF?.data?.[0];
+
     return json({
-      temperature: temp,
-      humidity: hum,
-      timestamp,
-      minTemperature: null,
-      maxTemperature: null,
+      temperature: latest.temperature,
+      humidity: latest.humidity,
+      timestamp: formatDisplayTimestamp(latest.timestamp),
+      minTemperature: extreme ? extreme.min : null,
+      maxTemperature: extreme ? extreme.max : null,
     });
   } catch (error) {
     return json({ error: "Unable to fetch weather data" }, 502);
   }
 }
 
-async function handleHistoricalRequest(url) {
-  try {
-    const start = url.searchParams.get("start");
-    const end = url.searchParams.get("end");
-    if (!start || !end) {
-      return json({ error: "Missing start or end query parameter" }, 400);
-    }
-    const endpoint = `https://dataset.api.hub.geosphere.at/v1/station/historical/tawes-v1-10min?parameters=RR&parameters=P&parameters=TL&parameters=RF&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&station_ids=11381&output_format=geojson`;
-    const response = await fetch(endpoint, {
-      headers: { accept: "application/json" },
-    });
-    if (!response.ok) {
-      return json({ error: `Weather source returned ${response.status}` }, response.status);
-    }
-    const data = await response.json();
-    const features = data.features || [];
-    const result = features.map(f => {
-      const params = f.properties?.parameters;
-      const timestamp = data.timestamps?.[features.indexOf(f)];
-      return {
-        temperature: params?.TL?.data?.[0] ?? null,
-        humidity: params?.RF?.data?.[0] ?? null,
-        timestamp: timestamp ?? null,
-      };
-    });
-    return json(result, 200);
-  } catch (error) {
-    return json({ error: "Unable to fetch historical data" }, 502);
+function buildCurrentWeatherUrl() {
+  const url = new URL(`${WEATHER_API_BASE}/current/tawes-v1-10min`);
+  addCommonWeatherParams(url.searchParams);
+  return url.toString();
+}
+
+function buildHistoricalWeatherUrl(now = new Date()) {
+  const range = getCurrentLocalDayUtcRange(now);
+  const url = new URL(`${WEATHER_API_BASE}/historical/tawes-v1-10min`);
+
+  addCommonWeatherParams(url.searchParams);
+  url.searchParams.set("start", formatApiTimestamp(range.start));
+  url.searchParams.set("end", formatApiTimestamp(range.end));
+
+  return url.toString();
+}
+
+function addCommonWeatherParams(searchParams) {
+  PARAMETERS.forEach((parameter) => {
+    searchParams.append("parameters", parameter);
+  });
+  searchParams.set("station_ids", STATION_ID);
+  searchParams.set("output_format", "geojson");
+}
+
+async function fetchWeatherJson(url) {
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Weather source returned ${response.status}`);
   }
+
+  return response.json();
+}
+
+function findLatestMeasurement(collection) {
+  const feature = getStationFeature(collection);
+
+  if (!feature || !Array.isArray(collection.timestamps)) {
+    return null;
+  }
+
+  const temperature = getParameterData(feature, "TL");
+  const humidity = getParameterData(feature, "RF");
+
+  for (let index = collection.timestamps.length - 1; index >= 0; index -= 1) {
+    if (
+      typeof collection.timestamps[index] === "string" &&
+      typeof temperature[index] === "number" &&
+      typeof humidity[index] === "number"
+    ) {
+      return {
+        temperature: temperature[index],
+        humidity: humidity[index],
+        timestamp: collection.timestamps[index],
+      };
+    }
+  }
+
+  return null;
+}
+
+function findTemperatureExtremes(collection) {
+  const feature = getStationFeature(collection);
+
+  if (!feature) {
+    return null;
+  }
+
+  const temperatures = getParameterData(feature, "TL").filter((value) => {
+    return typeof value === "number";
+  });
+
+  if (temperatures.length === 0) {
+    return null;
+  }
+
+  return {
+    min: Math.min(...temperatures),
+    max: Math.max(...temperatures),
+  };
+}
+
+function getStationFeature(collection) {
+  if (!collection || !Array.isArray(collection.features)) {
+    return null;
+  }
+
+  return collection.features.find((feature) => {
+    return (
+      feature &&
+      feature.properties &&
+      feature.properties.station === STATION_ID
+    );
+  });
+}
+
+function getParameterData(feature, parameter) {
+  const values =
+    feature.properties &&
+    feature.properties.parameters &&
+    feature.properties.parameters[parameter] &&
+    feature.properties.parameters[parameter].data;
+
+  return Array.isArray(values) ? values : [];
+}
+
+function getCurrentLocalDayUtcRange(now) {
+  const parts = getZonedDateParts(now, WEATHER_TIME_ZONE);
+  const nextDay = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + 1));
+
+  return {
+    start: zonedTimeToUtc(parts.year, parts.month, parts.day),
+    end: zonedTimeToUtc(
+      nextDay.getUTCFullYear(),
+      nextDay.getUTCMonth() + 1,
+      nextDay.getUTCDate(),
+    ),
+  };
+}
+
+function zonedTimeToUtc(year, month, day) {
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const offsetMinutes = getTimeZoneOffsetMinutes(utcGuess, WEATHER_TIME_ZONE);
+
+  return new Date(utcGuess.getTime() - offsetMinutes * 60 * 1000);
+}
+
+function getTimeZoneOffsetMinutes(date, timeZone) {
+  const parts = getZonedDateTimeParts(date, timeZone);
+  const zonedAsUtc = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second,
+  );
+
+  return Math.round((zonedAsUtc - date.getTime()) / (60 * 1000));
+}
+
+function getZonedDateParts(date, timeZone) {
+  const parts = getZonedDateTimeParts(date, timeZone);
+
+  return {
+    year: parts.year,
+    month: parts.month,
+    day: parts.day,
+  };
+}
+
+function getZonedDateTimeParts(date, timeZone) {
+  const values = {};
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+
+  formatter.formatToParts(date).forEach((part) => {
+    if (part.type !== "literal") {
+      values[part.type] = Number(part.value);
+    }
+  });
+
+  return values;
+}
+
+function formatApiTimestamp(date) {
+  return [
+    date.getUTCFullYear(),
+    "-",
+    pad(date.getUTCMonth() + 1),
+    "-",
+    pad(date.getUTCDate()),
+    "T",
+    pad(date.getUTCHours()),
+    ":",
+    pad(date.getUTCMinutes()),
+  ].join("");
+}
+
+function formatDisplayTimestamp(timestamp) {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const parts = getZonedDateTimeParts(date, WEATHER_TIME_ZONE);
+
+  return [
+    parts.year,
+    "-",
+    pad(parts.month),
+    "-",
+    pad(parts.day),
+    " ",
+    pad(parts.hour),
+    ":",
+    pad(parts.minute),
+    ":",
+    pad(parts.second),
+  ].join("");
+}
+
+function pad(value) {
+  return String(value).padStart(2, "0");
 }
 
 function json(data, status = 200) {
@@ -87,13 +270,3 @@ function json(data, status = 200) {
     },
   });
 }
-
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=30",
-    },
-  });
-}
-
