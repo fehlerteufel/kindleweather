@@ -1,6 +1,10 @@
 const WEATHER_API_BASE = "https://dataset.api.hub.geosphere.at/v1/station";
+const NOWCAST_API_BASE =
+  "https://dataset.api.hub.geosphere.at/v1/timeseries/forecast/nowcast-v1-15min-1km";
 const STATION_ID = "11381";
 const PARAMETERS = ["RR", "P", "TL", "RF"];
+const NOWCAST_PARAMETERS = ["t2m", "fx", "rr", "pt"];
+const NOWCAST_LAT_LON = "47.703,16.013";
 const WEATHER_TIME_ZONE = "Europe/Vienna";
 
 export default {
@@ -9,6 +13,10 @@ export default {
 
     if (url.pathname === "/api/weather") {
       return handleWeatherRequest();
+    }
+
+    if (url.pathname === "/api/nowcast") {
+      return handleNowcastRequest();
     }
 
     if (url.pathname === "/api/time") {
@@ -58,9 +66,37 @@ async function handleWeatherRequest() {
   }
 }
 
+async function handleNowcastRequest() {
+  try {
+    const nowcast = await fetchWeatherJson(buildNowcastUrl());
+    const forecast = extractNowcast(nowcast);
+
+    if (!forecast) {
+      return json({ error: "No nowcast values found" }, 502);
+    }
+
+    return json(forecast, 200, "public, max-age=60");
+  } catch (error) {
+    return json({ error: "Unable to fetch nowcast data" }, 502);
+  }
+}
+
 function buildCurrentWeatherUrl() {
   const url = new URL(`${WEATHER_API_BASE}/current/tawes-v1-10min`);
   addCommonWeatherParams(url.searchParams);
+  return url.toString();
+}
+
+function buildNowcastUrl() {
+  const url = new URL(NOWCAST_API_BASE);
+
+  NOWCAST_PARAMETERS.forEach((parameter) => {
+    url.searchParams.append("parameters", parameter);
+  });
+  url.searchParams.set("lat_lon", NOWCAST_LAT_LON);
+  url.searchParams.set("forecast_offset", "0");
+  url.searchParams.set("output_format", "geojson");
+
   return url.toString();
 }
 
@@ -145,6 +181,20 @@ function findTemperatureExtremes(collection) {
   };
 }
 
+function extractNowcast(collection) {
+  const feature = getFirstFeature(collection);
+
+  if (!feature || !Array.isArray(collection.timestamps)) {
+    return null;
+  }
+
+  return {
+    timestamps: collection.timestamps,
+    rain: getParameterData(feature, "rr"),
+    wind: getParameterData(feature, "fx"),
+  };
+}
+
 function getStationFeature(collection) {
   if (!collection || !Array.isArray(collection.features)) {
     return null;
@@ -157,6 +207,14 @@ function getStationFeature(collection) {
       feature.properties.station === STATION_ID
     );
   });
+}
+
+function getFirstFeature(collection) {
+  if (!collection || !Array.isArray(collection.features)) {
+    return null;
+  }
+
+  return collection.features[0] || null;
 }
 
 function getParameterData(feature, parameter) {

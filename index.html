@@ -38,11 +38,22 @@
       <span style="font-size: 30px; vertical-align: top;">℃</span>
     </div>
   </div>
+  <div style="height: 50%;"></div>
+  <div class="nowcast">
+    <table class="nowcast-table">
+      <tbody>
+        <tr class="nowcast-hours"></tr>
+        <tr class="nowcast-rain"></tr>
+        <tr class="nowcast-wind"></tr>
+      </tbody>
+    </table>
+  </div>
 
   <script>
     (function () {
       var days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
       var months = ["Jan.", "Feb.", "März", "April", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."];
+      var nowcastRefreshMinutes = [1, 16, 31, 46];
       var timeSyncIntervalMs = 5 * 60 * 1000;
       var timeSyncMaxSamples = 7;
       var timeSyncMaxRoundTripMs = 15000;
@@ -58,10 +69,19 @@
       var minTempEl = document.querySelector(".mintemp");
       var maxTempEl = document.querySelector(".maxtemp");
       var timestampEl = document.getElementById("timestamp");
+      var nowcastHoursEl = document.querySelector(".nowcast-hours");
+      var nowcastRainEl = document.querySelector(".nowcast-rain");
+      var nowcastWindEl = document.querySelector(".nowcast-wind");
       var lastWeatherTimestamp = null;
+      var lastNowcastRequestSlot = null;
+      var nowcastRequestInFlight = false;
 
       function twoDigits(n) {
         return n < 10 ? "0" + n : "" + n;
+      }
+
+      function isArray(value) {
+        return Object.prototype.toString.call(value) === "[object Array]";
       }
 
       function systemNowMs() {
@@ -94,6 +114,7 @@
         refreshClockOnly();
         scheduleRefresh();
         requestWeather();
+        requestNowcast(false);
       }
 
       function scheduleRefresh() {
@@ -161,6 +182,186 @@
           scheduleRefresh();
         };
         xhr.send();
+      }
+
+      function requestNowcast(force) {
+        var slot = getCurrentNowcastRequestSlot();
+        var xhr;
+
+        if (!force && !slot) {
+          return;
+        }
+
+        if (slot && lastNowcastRequestSlot === slot) {
+          return;
+        }
+
+        if (nowcastRequestInFlight) {
+          return;
+        }
+
+        if (slot) {
+          lastNowcastRequestSlot = slot;
+        }
+        nowcastRequestInFlight = true;
+
+        xhr = new XMLHttpRequest();
+        xhr.open("GET", "/api/nowcast?t=" + correctedNowMs(), true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState !== 4) {
+            return;
+          }
+
+          nowcastRequestInFlight = false;
+
+          if (xhr.status < 200 || xhr.status >= 300) {
+            return;
+          }
+
+          try {
+            renderNowcast(JSON.parse(xhr.responseText));
+          } catch (error) {
+            return;
+          }
+        };
+        xhr.send();
+      }
+
+      function getCurrentNowcastRequestSlot() {
+        var now = new Date(correctedNowMs());
+        var minute = now.getUTCMinutes();
+        var i;
+
+        for (i = 0; i < nowcastRefreshMinutes.length; i++) {
+          if (minute === nowcastRefreshMinutes[i]) {
+            return [
+              now.getUTCFullYear(),
+              twoDigits(now.getUTCMonth() + 1),
+              twoDigits(now.getUTCDate()),
+              twoDigits(now.getUTCHours()),
+              twoDigits(minute)
+            ].join("");
+          }
+        }
+
+        return null;
+      }
+
+      function renderNowcast(data) {
+        var timestamps = data && data.timestamps;
+        var rain = data && data.rain;
+        var wind = data && data.wind;
+        var hourCells = "";
+        var rainCells = "";
+        var windCells = "";
+        var i;
+        var utcMs;
+        var localTime;
+
+        if (!isArray(timestamps) || !isArray(rain) || !isArray(wind)) {
+          return;
+        }
+
+        for (i = 0; i < timestamps.length; i++) {
+          utcMs = parseApiUtcTimestamp(timestamps[i]);
+          if (utcMs === null) {
+            hourCells += "<td></td>";
+          } else {
+            localTime = utcToLocalDate(utcMs);
+            hourCells += "<td>" + formatNowcastHour(localTime) + "</td>";
+          }
+
+          rainCells += "<td>" + buildForecastIcon("rain", rain[i], getRainIconClass(rain[i])) + "</td>";
+          windCells += "<td>" + buildForecastIcon("wind", wind[i], getWindIconClass(wind[i])) + "</td>";
+        }
+
+        nowcastHoursEl.innerHTML = hourCells;
+        nowcastRainEl.innerHTML = rainCells;
+        nowcastWindEl.innerHTML = windCells;
+      }
+
+      function parseApiUtcTimestamp(timestamp) {
+        var parts;
+        var fallback;
+
+        if (typeof timestamp !== "string") {
+          return null;
+        }
+
+        parts = timestamp.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(?:\+00:00|Z)$/);
+        if (parts) {
+          return Date.UTC(
+            Number(parts[1]),
+            Number(parts[2]) - 1,
+            Number(parts[3]),
+            Number(parts[4]),
+            Number(parts[5]),
+            Number(parts[6] || 0)
+          );
+        }
+
+        fallback = Date.parse(timestamp);
+        return isNaN(fallback) ? null : fallback;
+      }
+
+      function utcToLocalDate(utcMs) {
+        return new Date(utcMs + getTimezoneOffsetHours(utcMs) * 60 * 60 * 1000);
+      }
+
+      function formatNowcastHour(localTime) {
+        if (localTime.getUTCMinutes() !== 0) {
+          return "";
+        }
+
+        return localTime.getUTCHours() + ":00";
+      }
+
+      function getRainIconClass(value) {
+        value = Number(value);
+        if (isNaN(value)) {
+          return "is-empty";
+        }
+        if (value < 0.25) {
+          return "is-small is-grey";
+        }
+        if (value < 1) {
+          return "is-medium is-grey";
+        }
+        if (value < 10) {
+          return "is-big is-black";
+        }
+        return "is-big is-inverted";
+      }
+
+      function getWindIconClass(value) {
+        value = Number(value);
+        if (isNaN(value)) {
+          return "is-empty";
+        }
+        if (value < 10) {
+          return "is-small is-grey";
+        }
+        if (value < 15) {
+          return "is-medium is-grey";
+        }
+        if (value < 25) {
+          return "is-big is-black";
+        }
+        return "is-big is-inverted";
+      }
+
+      function buildForecastIcon(type, value, iconClass) {
+        var title = type + " " + value;
+
+        if (iconClass === "is-empty") {
+          return "";
+        }
+
+        if (type === "rain") {
+          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '"><span class="nowcast-drop"></span></span>';
+        }
+
+        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '"><span></span><span></span><span></span></span>';
       }
 
       function addTimeSample(deviationMs) {
@@ -398,6 +599,7 @@
       }
 
       refresh();
+      requestNowcast(true);
       syncTime();
       window.setInterval(syncTime, timeSyncIntervalMs);
 
