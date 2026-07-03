@@ -320,6 +320,9 @@
         if (isNaN(value)) {
           return "is-empty";
         }
+        if (value < 0.025) {
+          return "is-empty";
+        }
         if (value < 0.25) {
           return "is-small is-grey";
         }
@@ -336,6 +339,9 @@
         value = Number(value);
         if (isNaN(value)) {
           return "is-empty";
+        }
+        if (value < 5) {
+          return "is-small is-grey";
         }
         if (value < 10) {
           return "is-small is-grey";
@@ -357,10 +363,10 @@
         }
 
         if (type === "rain") {
-          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '">⛆</span>';
+          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '">|||</span>';
         }
 
-        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '">༄</span>';
+        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '">~~~</span>';
       }
 
       function addTimeSample(deviationMs) {
