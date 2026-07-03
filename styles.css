@@ -13,7 +13,7 @@ body {
 
 .nowcast {
   clear: both;
-  padding-top: 70px;
+  padding-top: 60px;
 }
 
 .nowcast-table {
@@ -44,45 +44,23 @@ body {
   position: relative;
   font-family: "Courier New", Courier, monospace;
   font-weight: bold;
+  width: 62px;
+  height: 44px;
+  font-size: 34px;
   line-height: 1.1;
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
 }
 
-.nowcast-icon.is-small {
-  width: 44px;
-  height: 32px;
-  font-size: 22px;
-}
-
-.nowcast-icon.is-medium {
-  width: 54px;
-  height: 44px;
-  font-size: 28px;
-}
-
-.nowcast-icon.is-big,
+.nowcast-icon.is-grey,
+.nowcast-icon.is-black,
 .nowcast-icon.is-inverted {
-  width: 62px;
-  height: 56px;
-  font-size: 34px;
-}
-
-.nowcast-icon.is-inverted {
-  background: #000;
-}
-
-.nowcast-icon.is-grey {
-  color: #888;
-}
-
-.nowcast-icon.is-black {
   color: #000;
 }
 
 .nowcast-icon.is-inverted {
-  color: #fff;
+  background: transparent;
 }
 
 .weather {

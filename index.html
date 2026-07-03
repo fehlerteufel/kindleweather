@@ -320,19 +320,7 @@
         if (isNaN(value)) {
           return "is-empty";
         }
-        if (value < 0.025) {
-          return "is-empty";
-        }
-        if (value < 0.25) {
-          return "is-small is-grey";
-        }
-        if (value < 1) {
-          return "is-medium is-grey";
-        }
-        if (value < 10) {
-          return "is-big is-black";
-        }
-        return "is-big is-inverted";
+        return "is-black";
       }
 
       function getWindIconClass(value) {
@@ -340,33 +328,55 @@
         if (isNaN(value)) {
           return "is-empty";
         }
+        return "is-black";
+      }
+
+      function getRainIconText(value) {
+        value = Number(value);
+        if (value < 0.025) {
+          return "";
+        }
+        if (value < 0.25) {
+          return "|";
+        }
+        if (value < 1) {
+          return "||";
+        }
+        return "|||";
+      }
+
+      function getWindIconText(value) {
+        value = Number(value);
         if (value < 5) {
-          return "is-small is-grey";
+          return "";
         }
         if (value < 10) {
-          return "is-small is-grey";
+          return "~";
         }
         if (value < 15) {
-          return "is-medium is-grey";
+          return "~~";
         }
-        if (value < 25) {
-          return "is-big is-black";
+        if (value < 20) {
+          return "~~~";
         }
-        return "is-big is-inverted";
+        return "~~~";
       }
 
       function buildForecastIcon(type, value, iconClass) {
         var title = type + " " + value;
+        var iconText;
 
         if (iconClass === "is-empty") {
           return "";
         }
 
         if (type === "rain") {
-          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '">|||</span>';
+          iconText = getRainIconText(value);
+          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '">' + iconText + '</span>';
         }
 
-        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '">~~~</span>';
+        iconText = getWindIconText(value);
+        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '">' + iconText + '</span>';
       }
 
       function addTimeSample(deviationMs) {
