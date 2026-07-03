@@ -13,7 +13,7 @@ body {
 
 .nowcast {
   clear: both;
-  padding-top: 18px;
+  padding-top: 70px;
 }
 
 .nowcast-table {
@@ -42,101 +42,46 @@ body {
 .nowcast-icon {
   display: inline-block;
   position: relative;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
   vertical-align: middle;
 }
 
 .nowcast-icon.is-small {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  font-size: 28px;
 }
 
 .nowcast-icon.is-medium {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  font-size: 40px;
 }
 
 .nowcast-icon.is-big,
 .nowcast-icon.is-inverted {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
+  font-size: 52px;
 }
 
 .nowcast-icon.is-inverted {
   background: #000;
 }
 
-.nowcast-drop {
-  display: block;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  background: #000;
-  border-radius: 50% 50% 50% 0;
-  -webkit-transform: rotate(-45deg);
-  transform: rotate(-45deg);
+.nowcast-icon.is-grey {
+  color: #888;
 }
 
-.nowcast-rain-icon.is-small .nowcast-drop {
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
+.nowcast-icon.is-black {
+  color: #000;
 }
 
-.nowcast-rain-icon.is-medium .nowcast-drop {
-  width: 24px;
-  height: 24px;
-  margin: -12px 0 0 -12px;
-}
-
-.nowcast-rain-icon.is-big .nowcast-drop,
-.nowcast-rain-icon.is-inverted .nowcast-drop {
-  width: 36px;
-  height: 36px;
-  margin: -18px 0 0 -18px;
-}
-
-.nowcast-icon.is-grey .nowcast-drop,
-.nowcast-icon.is-grey span {
-  background: #888;
-}
-
-.nowcast-icon.is-black .nowcast-drop,
-.nowcast-icon.is-black span {
-  background: #000;
-}
-
-.nowcast-icon.is-inverted .nowcast-drop,
-.nowcast-icon.is-inverted span {
-  background: #fff;
-}
-
-.nowcast-wind-icon span {
-  display: block;
-  height: 4px;
-  margin-left: auto;
-  margin-right: auto;
-  background: #000;
-}
-
-.nowcast-wind-icon.is-small span {
-  width: 20px;
-  margin-top: 4px;
-}
-
-.nowcast-wind-icon.is-medium span {
-  width: 30px;
-  margin-top: 6px;
-}
-
-.nowcast-wind-icon.is-big span,
-.nowcast-wind-icon.is-inverted span {
-  width: 42px;
-  height: 5px;
-  margin-top: 8px;
-}
-
-.nowcast-wind-icon span:first-child {
-  margin-top: 0;
+.nowcast-icon.is-inverted {
+  color: #fff;
 }
 
 .weather {

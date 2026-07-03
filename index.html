@@ -38,7 +38,6 @@
       <span style="font-size: 30px; vertical-align: top;">℃</span>
     </div>
   </div>
-  <div style="height: 50%;"></div>
   <div class="nowcast">
     <table class="nowcast-table">
       <tbody>
@@ -358,10 +357,10 @@
         }
 
         if (type === "rain") {
-          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '"><span class="nowcast-drop"></span></span>';
+          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '">⛆</span>';
         }
 
-        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '"><span></span><span></span><span></span></span>';
+        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '">༄</span>';
       }
 
       function addTimeSample(deviationMs) {
