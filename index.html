@@ -40,11 +40,7 @@
   </div>
   <div class="nowcast">
     <table class="nowcast-table">
-      <tbody>
-        <tr class="nowcast-hours"></tr>
-        <tr class="nowcast-rain"></tr>
-        <tr class="nowcast-wind"></tr>
-      </tbody>
+      <tbody class="nowcast-body"></tbody>
     </table>
   </div>
 
@@ -68,9 +64,7 @@
       var minTempEl = document.querySelector(".mintemp");
       var maxTempEl = document.querySelector(".maxtemp");
       var timestampEl = document.getElementById("timestamp");
-      var nowcastHoursEl = document.querySelector(".nowcast-hours");
-      var nowcastRainEl = document.querySelector(".nowcast-rain");
-      var nowcastWindEl = document.querySelector(".nowcast-wind");
+      var nowcastBodyEl = document.querySelector(".nowcast-body");
       var lastWeatherTimestamp = null;
       var lastNowcastRequestSlot = null;
       var nowcastRequestInFlight = false;
@@ -187,6 +181,10 @@
         var slot = getCurrentNowcastRequestSlot();
         var xhr;
 
+        if (!nowcastBodyEl) {
+          return;
+        }
+
         if (!force && !slot) {
           return;
         }
@@ -248,35 +246,33 @@
 
       function renderNowcast(data) {
         var timestamps = data && data.timestamps;
+        var temperature = data && data.temperature;
         var rain = data && data.rain;
         var wind = data && data.wind;
-        var hourCells = "";
-        var rainCells = "";
-        var windCells = "";
+        var rows = "";
         var i;
         var utcMs;
-        var localTime;
+        var hourText;
 
-        if (!isArray(timestamps) || !isArray(rain) || !isArray(wind)) {
+        if (!nowcastBodyEl || !isArray(timestamps) || !isArray(temperature) || !isArray(rain) || !isArray(wind)) {
           return;
         }
 
         for (i = 0; i < timestamps.length; i++) {
           utcMs = parseApiUtcTimestamp(timestamps[i]);
-          if (utcMs === null) {
-            hourCells += "<td></td>";
-          } else {
-            localTime = utcToLocalDate(utcMs);
-            hourCells += "<td>" + formatNowcastHour(localTime) + "</td>";
-          }
+          hourText = utcMs === null ? "" : formatNowcastHour(utcToLocalDate(utcMs));
 
-          rainCells += "<td>" + buildForecastIcon("rain", rain[i], getRainIconClass(rain[i])) + "</td>";
-          windCells += "<td>" + buildForecastIcon("wind", wind[i], getWindIconClass(wind[i])) + "</td>";
+          rows += [
+            '<tr>',
+            '<td class="nowcast-hour">', hourText, '</td>',
+            '<td class="nowcast-temperature">', formatNowcastTemperature(temperature[i]), '</td>',
+            '<td class="nowcast-rain">', buildNowcastImage(getRainImageSrc(rain[i]), "rain " + rain[i]), '</td>',
+            '<td class="nowcast-wind">', buildNowcastImage(getWindImageSrc(wind[i]), "wind " + wind[i]), '</td>',
+            '</tr>'
+          ].join("");
         }
 
-        nowcastHoursEl.innerHTML = hourCells;
-        nowcastRainEl.innerHTML = rainCells;
-        nowcastWindEl.innerHTML = windCells;
+        nowcastBodyEl.innerHTML = rows;
       }
 
       function parseApiUtcTimestamp(timestamp) {
@@ -312,71 +308,58 @@
           return "";
         }
 
-        return localTime.getUTCHours() + ":00";
+        return String(localTime.getUTCHours());
       }
 
-      function getRainIconClass(value) {
+      function formatNowcastTemperature(value) {
         value = Number(value);
         if (isNaN(value)) {
-          return "is-empty";
+          return "";
         }
-        return "is-black";
+
+        return String(Math.round(value));
       }
 
-      function getWindIconClass(value) {
+      function getRainImageSrc(value) {
         value = Number(value);
-        if (isNaN(value)) {
-          return "is-empty";
-        }
-        return "is-black";
-      }
-
-      function getRainIconText(value) {
-        value = Number(value);
-        if (value < 0.025) {
+        if (isNaN(value) || value < 0.02) {
           return "";
         }
         if (value < 0.25) {
-          return "|";
+          return "img/rain_1.png";
         }
         if (value < 1) {
-          return "||";
-        }
-        return "|||";
-      }
-
-      function getWindIconText(value) {
-        value = Number(value);
-        if (value < 5) {
-          return "";
+          return "img/rain_2.png";
         }
         if (value < 10) {
-          return "~";
+          return "img/rain_3.png";
         }
-        if (value < 15) {
-          return "~~";
-        }
-        if (value < 20) {
-          return "~~~";
-        }
-        return "~~~";
+        return "img/rain_4.png";
       }
 
-      function buildForecastIcon(type, value, iconClass) {
-        var title = type + " " + value;
-        var iconText;
+      function getWindImageSrc(value) {
+        value = Number(value);
+        if (isNaN(value) || value < 2) {
+          return "";
+        }
+        if (value < 6) {
+          return "img/wind_1.png";
+        }
+        if (value < 15) {
+          return "img/wind_2.png";
+        }
+        if (value < 25) {
+          return "img/wind_3.png";
+        }
+        return "img/wind_4.png";
+      }
 
-        if (iconClass === "is-empty") {
+      function buildNowcastImage(src, title) {
+        if (!src) {
           return "";
         }
 
-        if (type === "rain") {
-          iconText = getRainIconText(value);
-          return '<span class="nowcast-icon nowcast-rain-icon ' + iconClass + '" title="' + title + '">' + iconText + '</span>';
-        }
-
-        iconText = getWindIconText(value);
-        return '<span class="nowcast-icon nowcast-wind-icon ' + iconClass + '" title="' + title + '">' + iconText + '</span>';
+        return '<img class="nowcast-icon" src="' + src + '" alt="" title="' + title + '">';
       }
 
       function addTimeSample(deviationMs) {

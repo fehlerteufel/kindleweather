@@ -13,7 +13,7 @@ body {
 
 .nowcast {
   clear: both;
-  padding-top: 60px;
+  padding-top: 20px;
 }
 
 .nowcast-table {
@@ -24,43 +24,35 @@ body {
 }
 
 .nowcast-table td {
-  height: 72px;
-  padding: 0;
+  height: 42px;
+  padding: 0 4px;
   border-bottom: 1px solid #000;
   text-align: center;
   vertical-align: middle;
 }
 
-.nowcast-hours td {
-  height: 42px;
-  font-size: 24px;
+.nowcast-hour {
+  width: 18%;
+  font-size: 28px;
   font-weight: bold;
-  line-height: 1;
-  vertical-align: bottom;
+}
+
+.nowcast-temperature {
+  width: 28%;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.nowcast-rain,
+.nowcast-wind {
+  width: 27%;
 }
 
 .nowcast-icon {
   display: inline-block;
-  position: relative;
-  font-family: "Courier New", Courier, monospace;
-  font-weight: bold;
-  width: 62px;
-  height: 44px;
-  font-size: 34px;
-  line-height: 1.1;
-  text-align: center;
+  width: 32px;
+  height: 32px;
   vertical-align: middle;
-  white-space: nowrap;
-}
-
-.nowcast-icon.is-grey,
-.nowcast-icon.is-black,
-.nowcast-icon.is-inverted {
-  color: #000;
-}
-
-.nowcast-icon.is-inverted {
-  background: transparent;
 }
 
 .weather {

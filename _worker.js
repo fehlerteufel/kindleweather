@@ -3,7 +3,7 @@ const NOWCAST_API_BASE =
   "https://dataset.api.hub.geosphere.at/v1/timeseries/forecast/nowcast-v1-15min-1km";
 const STATION_ID = "11381";
 const PARAMETERS = ["RR", "P", "TL", "RF"];
-const NOWCAST_PARAMETERS = ["t2m", "fx", "rr", "pt"];
+const NOWCAST_PARAMETERS = ["t2m", "fx", "rr"];
 const NOWCAST_LAT_LON = "47.703,16.013";
 const WEATHER_TIME_ZONE = "Europe/Vienna";
 
@@ -190,6 +190,7 @@ function extractNowcast(collection) {
 
   return {
     timestamps: collection.timestamps,
+    temperature: getParameterData(feature, "t2m"),
     rain: getParameterData(feature, "rr"),
     wind: getParameterData(feature, "fx"),
   };
