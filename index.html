@@ -260,7 +260,7 @@
 
         for (i = 0; i < timestamps.length; i++) {
           utcMs = parseApiUtcTimestamp(timestamps[i]);
-          hourText = utcMs === null ? "" : formatNowcastHour(utcToLocalDate(utcMs));
+          hourText = utcMs === null ? "" : formatNowcastTime(utcToLocalDate(utcMs));
 
           rows += [
             '<tr>',
@@ -303,9 +303,9 @@
         return new Date(utcMs + getTimezoneOffsetHours(utcMs) * 60 * 60 * 1000);
       }
 
-      function formatNowcastHour(localTime) {
+      function formatNowcastTime(localTime) {
         if (localTime.getUTCMinutes() !== 0) {
-          return "";
+          return '<span class="nowcast-minute">' + twoDigits(localTime.getUTCMinutes()) + '</span>';
         }
 
         return String(localTime.getUTCHours());
