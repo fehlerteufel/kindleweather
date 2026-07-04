@@ -24,7 +24,7 @@ body {
 }
 
 .nowcast-table td {
-  height: 34px;
+  height: 36px;
   padding: 0 3px;
   border-bottom: 1px solid #000;
   text-align: center;
@@ -32,13 +32,13 @@ body {
 }
 
 .nowcast-hour {
-  min-width: 34px;
-  font-size: 22px;
+  min-width: 36px;
+  font-size: 23px;
   font-weight: bold;
 }
 
 .nowcast-minute {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: normal;
 }
 

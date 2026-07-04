@@ -322,16 +322,16 @@
 
       function getRainImageSrc(value) {
         value = Number(value);
-        if (isNaN(value) || value < 0.02) {
+        if (isNaN(value) || value < 0.025) {
           return "";
         }
         if (value < 0.25) {
           return "img/rain_1.png";
         }
-        if (value < 1) {
+        if (value < 1.25) {
           return "img/rain_2.png";
         }
-        if (value < 10) {
+        if (value < 4) {
           return "img/rain_3.png";
         }
         return "img/rain_4.png";
@@ -339,13 +339,13 @@
 
       function getWindImageSrc(value) {
         value = Number(value);
-        if (isNaN(value) || value < 2) {
+        if (isNaN(value) || value < 4) {
           return "";
         }
-        if (value < 6) {
+        if (value < 10) {
           return "img/wind_1.png";
         }
-        if (value < 15) {
+        if (value < 20) {
           return "img/wind_2.png";
         }
         if (value < 25) {
