@@ -17,9 +17,9 @@ body {
 }
 
 .nowcast-table {
-  width: 100%;
+  width: auto;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -32,20 +32,20 @@ body {
 }
 
 .nowcast-hour {
-  width: 18%;
+  min-width: 42px;
   font-size: 28px;
   font-weight: bold;
 }
 
 .nowcast-temperature {
-  width: 28%;
+  min-width: 48px;
   font-size: 28px;
   font-weight: bold;
 }
 
 .nowcast-rain,
 .nowcast-wind {
-  width: 27%;
+  min-width: 44px;
 }
 
 .nowcast-icon {
